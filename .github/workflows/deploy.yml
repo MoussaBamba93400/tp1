@@ -1,0 +1,43 @@
+name: Trivy et Owasp zap scan
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Compose
+        run: docker compose up -d
+
+      --- Trivy --- 
+      - name: Install Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '0'
+          format: 'table'
+
+      - name: Trivy scan Juice Shop image
+        run: trivy image --severity HIGH,CRITICAL bkimminich/juice-shop
+
+      - name: Run OWASP Zap Scan
+        run: |
+          docker exec zap zap-baseline.py \
+            -t http://juice-shop:3000 \
+            -r /zap/wrk/zap_report.html
+
+      - name: Copy ZAP report
+        run: docker cp zap:/zap/wrk/zap_report.html zap_report.html
+
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: zap-report
+          path: zap_report.html
