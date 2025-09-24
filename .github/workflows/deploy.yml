@@ -15,7 +15,7 @@ jobs:
       - name: Set up Docker Compose
         run: docker compose up -d
 
-      --- Trivy --- 
+      # --- Trivy --- 
       - name: Install Trivy
         uses: aquasecurity/trivy-action@master
         with:
